@@ -9,7 +9,7 @@ int offset = 23;
 float cur_height = 0.0;
 
 
-
+// EWB Prototype V1.5 Code
 // Code will run 'tasks' at different rates
 // Task 0: collect sensor data every loop
 // Task 1: Print data periodically to serial console for debugging purposes/backup to display.
