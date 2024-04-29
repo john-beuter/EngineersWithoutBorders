@@ -30,7 +30,7 @@ void setup()
 {
     Serial.begin(115200);
     pinMode(PRESSURE_SENSOR_PIN, INPUT);
-
+    pinMode(LED_BUILTIN, OUTPUT);
 
 
     // Check for display (we still want it to collect data even if the display isn't present)
@@ -77,6 +77,7 @@ void loop()
 
     // Log data to SD card
     //logData();
+
 }
 
 
@@ -103,7 +104,6 @@ int getTemp()
 {
 
 }
-
 
 // Periodically prints to serial console
 void printDataSerial()
@@ -143,9 +143,8 @@ void updateDisplay()
     static unsigned long dispMillis = millis();
 
     // Check difference between current time and last time this was called
-    if (millis() - dispMillis > 100)
-    {
-        
+    if (millis() - dispMillis > 5000)
+    { 
 
         // Clear display
         display.clearDisplay();
@@ -160,5 +159,37 @@ void updateDisplay()
         
         dispMillis = millis();
     }
+
+}
+
+// Rapid LED blinking to indicate error.
+void rapidBlink()
+{
+    static unsigned long rapidBlinkMillis = millis();
+
+    if (millis() - rapidBlinkMillis > 100)
+    {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(200);
+        digitalWrite(LED_BUILTIN, LOW);
+        rapidBlinkMillis = millis();
+    }
+
+
+}
+
+// Rapid LED blinking to indicate error.
+void slowBlink()
+{
+    static unsigned long slowBlinkMillis = millis();
+
+    if (millis() - slowBlinkMillis > 1000)
+    {
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(1000);
+        digitalWrite(LED_BUILTIN, LOW);
+        slowBlinkMillis = millis();
+    }
+
 
 }
