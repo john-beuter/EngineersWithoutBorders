@@ -1,4 +1,10 @@
-#define pressureSensorPin A0
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_GFX.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <Wire.h>
+
+#define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
+#define PRESSURE_SENSOR_PIN A0
 
 
 float voltage = 0.0;
@@ -8,6 +14,7 @@ float cm_h2o = 0.0;
 int offset = 23;
 float cur_height = 0.0;
 
+Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
 // EWB Prototype V1.5 Code
 // Code will run 'tasks' at different rates
@@ -22,15 +29,34 @@ float cur_height = 0.0;
 void setup()
 {
     Serial.begin(115200);
-    pinMode(pressureSensorPin, INPUT);
+    pinMode(PRESSURE_SENSOR_PIN, INPUT);
 
 
 
     // Check for display (we still want it to collect data even if the display isn't present)
+    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+    {
+        Serial.println("Display not detected.");
+    }
+    else
+    {
+        // Clear buffer and initialize display.
+        display.clearDisplay();
+        display.display();
+
+        //display.setTextSize(3);
+        display.setFont(&FreeSans9pt7b);
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0, 20);
+        display.println("Display OK");
+        display.display();
+        delay(10000);
+    }
+
 
 
     // Check for SD card. If it isn't present, then show error
-
+    // Rapidly blink LED to signify error.
 
     // Display files on SD card
 
@@ -43,23 +69,22 @@ void loop()
     // Measure height every loop
     cur_height = getHeight();
 
+    // Update/refresh display
+    updateDisplay();
+
     // Print data to serial console every 5 seconds for debugging.
     printDataSerial();
 
     // Log data to SD card
-    logData();
-    
-    // Update/refresh display
-    updateDisplay();
-
+    //logData();
 }
 
 
-// Read sensor and calculate height of water
+// Read pressure sensor and calculate height of water
 float getHeight()
 {
     // Read from the sensor
-    value = analogRead(pressureSensorPin) - offset;
+    value = analogRead(PRESSURE_SENSOR_PIN) - offset;
 
     // Convert analog read to voltage
     voltage = value * (5.0/1023);
@@ -72,6 +97,13 @@ float getHeight()
 
     return cm_h2o;
 }
+
+// Read temperature sensor
+int getTemp()
+{
+
+}
+
 
 // Periodically prints to serial console
 void printDataSerial()
@@ -104,14 +136,29 @@ void logData()
 
 }
 
-// Update display
+// Periodically updates display
 void updateDisplay()
 {
+    // On first call, record starting time
     static unsigned long dispMillis = millis();
 
+    // Check difference between current time and last time this was called
     if (millis() - dispMillis > 100)
     {
-        // Update display
+        
+
+        // Clear display
+        display.clearDisplay();
+
+        // Print reading
+        display.setCursor(0, 20);
+        display.print(cur_height);
+        display.println(" cm");
+        delay(1);
+        display.display();
+        
+        
+        dispMillis = millis();
     }
 
 }
