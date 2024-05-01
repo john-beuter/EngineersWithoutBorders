@@ -7,12 +7,14 @@
 #define PRESSURE_SENSOR_PIN A0
 
 
-float voltage = 0.0;
+double voltage = 0.0;
+int read_offset = 23;
 int value = 0;
-float pressure_kpa = 0.0;
-float cm_h2o = 0.0;
-int offset = 23;
-float cur_height = 0.0;
+double pressure_kpa = 0.0;
+double cm_h2o = 0.0;
+double cur_height = 0.0;
+
+bool DISP_ENABLED = false;
 
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
 
@@ -34,7 +36,7 @@ void setup()
 
 
     // Check for display (we still want it to collect data even if the display isn't present)
-    if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
+    if (!DISP_ENABLED or !display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
     {
         Serial.println("Display not detected.");
     }
@@ -50,7 +52,7 @@ void setup()
         display.setCursor(0, 20);
         display.println("Display OK");
         display.display();
-        delay(10000);
+        delay(3000);
     }
 
 
@@ -70,7 +72,7 @@ void loop()
     cur_height = getHeight();
 
     // Update/refresh display
-    updateDisplay();
+    //updateDisplay();
 
     // Print data to serial console every 5 seconds for debugging.
     printDataSerial();
@@ -82,24 +84,30 @@ void loop()
 
 
 // Read pressure sensor and calculate height of water
-float getHeight()
+double getHeight()
 {
-    // Read from the sensor
-    value = analogRead(PRESSURE_SENSOR_PIN) - offset;
-
-    // Convert analog read to voltage
-    voltage = value * (5.0/1023);
-
-    // Convert voltage to pressure differential in kPa (2.17 is an offset for calibration)
-    pressure_kpa = (((voltage/4.5)-0.04)/0.018) + 2.17;
+    unsigned int avg_read = 0;
     
-    // Convert from kPa (pressure) to centimeters of h2o
-    cm_h2o = (10.1972*pressure_kpa);
+    // Read analog pin and average values
+    for (int i=0; i<100; i++)
+    {
+        avg_read += analogRead(PRESSURE_SENSOR_PIN);
+    }
+    avg_read = (avg_read / 100) - read_offset;
+
+    // Convert analog reading to voltage
+    voltage = (avg_read * (5.0/1023.0));
+
+    // Convert voltage to pressure
+    pressure_kpa = (55.55*voltage/4.5);
+
+    // Convert pressure differential to cm of H2O
+    cm_h2o = 0.0101972*pressure_kpa*1000;
 
     return cm_h2o;
 }
 
-// Read temperature sensor
+// Read DS18b20 temperature sensor
 int getTemp()
 {
 
