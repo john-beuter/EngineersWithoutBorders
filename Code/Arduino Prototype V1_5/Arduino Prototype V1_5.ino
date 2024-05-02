@@ -7,6 +7,7 @@
 
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 #define PRESSURE_SENSOR_PIN A0
+#define LED_PIN 7
 
 
 double voltage = 0.0;
@@ -37,6 +38,7 @@ void setup()
 {
     Serial.begin(115200);
     pinMode(PRESSURE_SENSOR_PIN, INPUT);
+    pinMode(LED_PIN, OUTPUT);
 
     // Check for display (we still want it to collect data even if the display isn't present)
     if (!DISP_ENABLED or !display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
@@ -65,7 +67,7 @@ void setup()
         while (true)
         {
             Serial.println("SD card not detected.");
-            // Print to display...
+            blinkLED();
         }
     }
     else
@@ -107,6 +109,8 @@ void loop()
 
     // Log data to SD card
     logData();
+
+
 
 }
 
@@ -241,34 +245,10 @@ void updateDisplay()
 
 }
 
-// Rapid LED blinking to indicate error.
-void rapidBlink()
+void blinkLED()
 {
-    static unsigned long rapidBlinkMillis = millis();
-
-    if (millis() - rapidBlinkMillis > 1000)
-    {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(1000);
-        digitalWrite(LED_BUILTIN, LOW);
-        rapidBlinkMillis = millis();
-    }
-
-
-}
-
-// Rapid LED blinking to indicate OK.
-void slowBlink()
-{
-    static unsigned long slowBlinkMillis = millis();
-
-    if (millis() - slowBlinkMillis > 1000)
-    {
-        digitalWrite(LED_BUILTIN, HIGH);
-        delay(1000);
-        digitalWrite(LED_BUILTIN, LOW);
-        slowBlinkMillis = millis();
-    }
-
-
+    digitalWrite(7, HIGH);
+    delay(500);
+    digitalWrite(7, LOW);
+    delay(500);
 }
