@@ -2,6 +2,8 @@
 #include <Adafruit_GFX.h>
 #include <Fonts/FreeSans9pt7b.h>
 #include <Wire.h>
+#include <SD.h>
+#include <string.h>
 
 #define SCREEN_ADDRESS 0x3C ///< See datasheet for Address; 0x3D for 128x64, 0x3C for 128x32
 #define PRESSURE_SENSOR_PIN A0
@@ -13,10 +15,13 @@ int value = 0;
 double pressure_kpa = 0.0;
 double cm_h2o = 0.0;
 double cur_height = 0.0;
+int file_counter = 0;
+String file_name;
 
 bool DISP_ENABLED = false;
 
 Adafruit_SSD1306 display(128, 32, &Wire, -1);
+File data_file;
 
 // EWB Prototype V1.5 Code
 // Code will run 'tasks' at different rates
@@ -32,13 +37,11 @@ void setup()
 {
     Serial.begin(115200);
     pinMode(PRESSURE_SENSOR_PIN, INPUT);
-    pinMode(LED_BUILTIN, OUTPUT);
-
 
     // Check for display (we still want it to collect data even if the display isn't present)
     if (!DISP_ENABLED or !display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS))
     {
-        Serial.println("Display not detected.");
+        Serial.println("Display not detected or disabled.");
     }
     else
     {
@@ -55,19 +58,44 @@ void setup()
         delay(3000);
     }
 
-
-
     // Check for SD card. If it isn't present, then show error
     // Rapidly blink LED to signify error.
+    if (!SD.begin(10))
+    {
+        while (true)
+        {
+            Serial.println("SD card not detected.");
+            // Print to display...
+        }
+    }
+    else
+    {
+        Serial.println("SD card found & initialized.");
+    }
 
-    // Display files on SD card
+    findUniqueFileName();
+    file_name = generateFileName();
 
+    File data_file = SD.open(file_name, FILE_WRITE);
 
+    if (!data_file)
+    {
+        Serial.println("Couldn't open data file.");
+    }
 
+    // Add file header
+    data_file.println("Time (ms), Water Level (cm)");
+    data_file.close();
+
+    Serial.print("------ Created file,");
+    Serial.println(" starting data logging ------");
+
+    delay(1000);
 }
 
 void loop()
 {
+    
     // Measure height every loop
     cur_height = getHeight();
 
@@ -78,7 +106,7 @@ void loop()
     printDataSerial();
 
     // Log data to SD card
-    //logData();
+    logData();
 
 }
 
@@ -130,6 +158,25 @@ void printDataSerial()
 
 }
 
+// Function to generate a unique file name
+void findUniqueFileName() {
+  String fileName;
+  do {
+    fileName = "data";
+    fileName += file_counter;
+    fileName += ".csv";
+    file_counter++;
+  } while (SD.exists(fileName));
+}
+
+// Function to generate the current filename
+String generateFileName() {
+  String fileName = "data";
+  fileName += (file_counter - 1); // Subtract 1 because fileCounter was incremented after finding the unique filename
+  fileName += ".csv";
+  return fileName;
+}
+
 // Log data to SD card
 void logData()
 {
@@ -137,7 +184,31 @@ void logData()
 
     if (millis() - sdMillis > 60000)
     {
-        // Log data
+        
+
+        // Current time
+        unsigned long current_time = millis();
+        File data_file = SD.open(file_name, FILE_WRITE);
+
+        if (data_file)
+        {
+    
+            // Log data
+            data_file.print(current_time);
+            data_file.print(",");
+            data_file.println(cur_height);
+            
+            // Close file
+            data_file.close();
+
+            // Confirm data has been logged
+            Serial.println("Data logged to card!");
+        }
+        else
+        {
+            Serial.println("Error opening data file. No data logged.");
+        }
+
 
         sdMillis = millis();
     }
@@ -175,10 +246,10 @@ void rapidBlink()
 {
     static unsigned long rapidBlinkMillis = millis();
 
-    if (millis() - rapidBlinkMillis > 100)
+    if (millis() - rapidBlinkMillis > 1000)
     {
         digitalWrite(LED_BUILTIN, HIGH);
-        delay(200);
+        delay(1000);
         digitalWrite(LED_BUILTIN, LOW);
         rapidBlinkMillis = millis();
     }
@@ -186,7 +257,7 @@ void rapidBlink()
 
 }
 
-// Rapid LED blinking to indicate error.
+// Rapid LED blinking to indicate OK.
 void slowBlink()
 {
     static unsigned long slowBlinkMillis = millis();
