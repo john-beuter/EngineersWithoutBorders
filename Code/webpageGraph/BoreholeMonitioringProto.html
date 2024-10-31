@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borehole Monitioring</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.2.0/firebase-database.js"></script>
+</head>
+<body>
+    <h1>Borehole Monitoring Data</h1>
+    <canvas id="BoreholeWaterLevels" style="width:100%;max-width:700px"></canvas>
+    <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "AIzaSyARIVm8rupn-huN_7LmAdQdfb1pw_golUk",
+          authDomain: "boreholemonitoring-9c1d4.firebaseapp.com",
+          databaseURL: "https://boreholemonitoring-9c1d4-default-rtdb.firebaseio.com",
+          projectId: "boreholemonitoring-9c1d4",
+          storageBucket: "boreholemonitoring-9c1d4.appspot.com",
+          messagingSenderId: "963138458926",
+          appId: "1:963138458926:web:e43c0b34dd18f68d2e16bf",
+          measurementId: "G-7ZRNMX2544"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Function to update the graph
+        function updateGraph(data) {
+            var ctx = document.getElementById('BoreholeWaterLevels').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: 'Water Level',
+                        data: Object.values(data),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Fetching data from Firebase //still need to add path needs data
+        firebase.database().ref('/').on('value', function(snapshot) {
+            var data = snapshot.val(); //- use this to connect
+            // data = [5.50,6,7,8] // fake data to test
+            console.log("Fetching data from Firebase");
+            if (data) {
+                updateGraph(data);
+                console.log("data updated")
+            } else {
+                console.log("No data available");
+            }
+        });
+    </script>
+</body>
+</html>
