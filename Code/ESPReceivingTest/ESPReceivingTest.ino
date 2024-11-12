@@ -8,39 +8,46 @@
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);     // Brief delay for serial monitor stability
 
-  SPI.pins(D7, D6, D5, LORA_SS); // MOSI, MISO, SCK, SS
-  SPI.begin();
-  SPI.setFrequency(1E6); // Set SPI clock to 1 MHz for stability
+  Serial.println("LoRa Receiver Initializing...");
 
-  Serial.println("LoRa Receiver");
+  // LoRa Module Reset
+  pinMode(LORA_RST, OUTPUT);
+  digitalWrite(LORA_RST, LOW);
+  delay(10);
+  digitalWrite(LORA_RST, HIGH);
+  delay(10);
 
-  Serial.println("Setting up LoRa pins...");
+  Serial.println("Setting LoRa pins...");
   LoRa.setPins(LORA_SS, LORA_RST, LORA_DIO0);
 
-  yield(); // Allow watchdog to reset
+  yield();
 
   Serial.println("Initializing LoRa module...");
-  if (!LoRa.begin(433E6)) {  // Initialize LoRa at 433 MHz
-      Serial.println("Starting LoRa failed!");
-      while(1);
-  } else {
-    Serial.println("LoRa module initialized successfully");
+  if (!LoRa.begin(433E6)) {
+    Serial.println("Starting LoRa failed! Check wiring and power.");
+    while (1);
   }
-  Serial.println("LoRa receiver setup complete");
+
+  // Additional LoRa settings for improved stability
+  LoRa.setSignalBandwidth(125E3);  // Set bandwidth to 125 kHz (default)
+  LoRa.setSpreadingFactor(10);     // Increase spreading factor to match transmitter
+  LoRa.setCodingRate4(5);          // Set coding rate to add error correction
+
+  Serial.println("LoRa module initialized successfully!");
 }
 
 void loop() {
   int packetSize = LoRa.parsePacket();
   if (packetSize) {
-    // Received a packet
     Serial.print("Received packet: ");
     while (LoRa.available()) {
       Serial.print((char)LoRa.read());
     }
     Serial.println();
-  }
-  // else Serial.println("not receiving packet");
-  delay(10);
+  } //else {
+  //   Serial.println("No packet received.");
+  // }
+  delay(500);  // Reduced delay to improve packet capture rate
 }
-
