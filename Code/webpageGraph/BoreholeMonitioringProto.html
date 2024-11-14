@@ -12,6 +12,13 @@
 <body>
     <h1>Borehole Monitoring Data</h1>
     <canvas id="BoreholeWaterLevels" style="width:100%;max-width:700px"></canvas>
+    <style>
+        canvas {
+            margin: auto;
+            width: 60%;
+            padding: 10px;
+        }
+    </style>
     <script>
         // Your web app's Firebase configuration
         var firebaseConfig = {
@@ -45,12 +52,24 @@
                 },
                 options: {
                     scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+                         yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Water Level'
+                            }
+                        }],
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: 'Data Points'
+                            }
+                        }]
                     }
                 }
-            });
+            })
         }
 
         // Fetching data from Firebase //still need to add path needs data
