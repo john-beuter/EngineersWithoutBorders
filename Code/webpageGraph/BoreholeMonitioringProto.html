@@ -37,20 +37,38 @@
 
         // Function to update the graph
         function updateGraph(data) {
+            const labels = [];
+            const readings = [];
+        
+            // Process data to extract date and reading
+            for (let key in data) {
+                 if (key == "ChildCount") continue;
+                const entry = data[key];
+                // Ensure entry has the expected structure before accessing properties
+                 if (entry && entry["Current Date"] && entry["CurrentTime"] && entry["ReadingValue"] !== undefined) {
+                    labels.push(entry["Current Date"] + " " + entry["CurrentTime"]); // Combine date and time
+                    readings.push(entry["ReadingValue"]); // Reading value
+               } else {
+                    console.error("Malformed entry detected:", entry);
+                }
+         }
+        // Function to update the graph
+        
             var ctx = document.getElementById('BoreholeWaterLevels').getContext('2d');
             var myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: Object.keys(data),
+                    labels: labels,
                     datasets: [{
                         label: 'Water Level',
-                        data: Object.values(data),
+                        data: readings,
                         borderColor: 'rgba(75, 192, 192, 1)',
                         borderWidth: 1,
                         fill: false
                     }]
                 },
                 options: {
+                    responsive: true,
                     scales: {
                          yAxes: [{
                             ticks: {
@@ -71,7 +89,7 @@
                 }
             })
         }
-
+     
         // Fetching data from Firebase //still need to add path needs data
         firebase.database().ref('/').on('value', function(snapshot) {
             var data = snapshot.val(); //- use this to connect
