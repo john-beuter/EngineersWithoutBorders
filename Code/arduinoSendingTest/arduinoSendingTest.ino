@@ -24,7 +24,7 @@ void loop() {
     Serial.print("Sending packet: ");
     Serial.println(i);
     LoRa.beginPacket();            
-    LoRa.print("packet: ");
+    LoRa.print("fart packet: ");
     LoRa.print(i); 
     LoRa.endPacket();             
     

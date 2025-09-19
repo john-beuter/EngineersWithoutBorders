@@ -1,43 +1,49 @@
 #include <Wire.h>
 #include <SC18IS602.h>
-#include <spi.h>
 
-// Initialize SC18IS602 with default I2C address (0x28)
 SC18IS602 i2cspi = SC18IS602(SC18IS602_ADDRESS_000);
 
-void setup() {
-    Serial.begin(9600);
-    Wire.begin();
+#define REG_VERSION 0x42  // LoRa chip version register
 
-    Serial.println("Initializing SC18IS602...");
-    i2cspi.begin(0);  // Initialize SC18IS602 in SPI mode 0
-    Serial.println("SC18IS602 initialized successfully!");
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+
+  Serial.println("Initializing LoRa module...");
+
+  i2cspi.begin(0);  // Initialize SC18IS602 in SPI mode 0
+
+  // Read LoRa version register
+  uint8_t version = readLoRaRegister(REG_VERSION);
+
+  if (version == 0x12) {
+    Serial.println("LoRa module initialized successfully!");
+  } else {
+    Serial.print("Failed to initialize LoRa module. Version read: 0x");
+    Serial.println(version, HEX);
+  }
 }
 
 void loop() {
-    Serial.println("Testing SPI communication...");
+}
 
-    // Transfer first test byte (0x55)
-    uint8_t response1 = i2cspi.transfer(0x55);
-    Serial.print("Sent: 0x55, Received: 0x");
-    Serial.println(response1, HEX);
+uint8_t readLoRaRegister(uint8_t reg) {
+  uint8_t command = reg & 0x7F;  // MSB = 0 for read operation
+  uint8_t value;
 
-    if (response1 != 0x55) {
-        Serial.println("Communication Error on 0x55!");
-        while (1);
-    }
+  setNSS(true);
+  i2cspi.transfer(command);
+  value = i2cspi.transfer(0x00);  // Dummy byte to receive data
+  setNSS(false);
 
-    // Transfer second test byte (0xAA)
-    uint8_t response2 = i2cspi.transfer(0xAA);
-    Serial.print("Sent: 0xAA, Received: 0x");
-    Serial.println(response2, HEX);
+  return value;
+}
 
-    if (response2 != 0xAA) {
-        Serial.println("Communication Error on 0xAA!");
-        while (1);
-    }
+void setNSS(bool state) {
+  uint8_t gpioValue = state ? 0xFE : 0xFD;  // GPIO0 High/Low
 
-    Serial.println("SPI communication successful!");
-
-    delay(2000);  // Wait 2 seconds for observation
+  Wire.beginTransmission(0x28);
+  Wire.write(0xF0);  // GPIO Write Command
+  Wire.write(gpioValue);
+  Wire.endTransmission();
 }
