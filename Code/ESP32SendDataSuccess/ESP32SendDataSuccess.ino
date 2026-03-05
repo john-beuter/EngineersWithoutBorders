@@ -39,7 +39,7 @@ static const uint32_t INTER_SEND_MS    = BURST_PERIOD_MS / 5; // 20000ms
 static const uint32_t REC_ACK_WAIT     = 1200000; //20 mins
 
 // ---------------- Sensor config ----------------
-#define ANALOG_PIN                                  1  // <-- set your actual ADC pin
+// #define ANALOG_PIN                                  1  // <-- set your actual ADC pin
 
 // Moving average settings
 static const int numReadings = 10;
@@ -70,6 +70,25 @@ void OnTxTimeout(void);
 void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
 void OnRxTimeout(void);
 
+//data collection definitions
+static const int   ADC_PIN = 2;        // CHANGE to your ADC pin
+static const float VS      = 5.0f;     // MUST match the sensor's actual supply
+static const float RTOP    = 10000.0f; // divider top resistor (sensor -> ADC node)
+static const float RBOT    = 22000.0f; // divider bottom resistor (ADC node -> GND)
+
+static inline float dividerRatio() {
+  // Vout = Vadc * (RTOP + RBOT) / RBOT  (ONLY if RTOP is on top, RBOT to GND)
+  return (RTOP + RBOT) / RBOT;
+}
+
+static float vout0 = 0.0f;  // measured Vout at "zero differential pressure"
+
+static float readVoutOnce() {
+  int raw = analogRead(ADC_PIN);
+  float vadc = (raw / 4095.0f) * 3.3f;
+  return vadc * dividerRatio();
+}
+
 // ---------------- State machine ----------------
 typedef enum {
   LOWPOWER,
@@ -94,44 +113,16 @@ volatile bool ackRestartRequested = false;
 // ---------------- Sensor update ----------------
 // calculate output data ONCE per burst
 static void updateSensorAverageOnce() {
-  // int raw = analogRead(ANALOG_PIN);
+    int raw = analogRead(ADC_PIN);
+    float vadc = (raw / 4095.0f) * 3.3f;
+    float vout = vadc * dividerRatio();
 
-  // // Clamp just in case
-  // if (raw < 0) raw = 0;
-  // if (raw > 4095) raw = 4095;
+    // Force P=0 at the calibration point:
+    float p_kpa = (vout - vout0) / (0.018f * VS);
 
-  // // ESP32 12-bit ADC typical range 0..4095
-  // float voltage = raw * (3.3f / 4095.0f);
+    float average_height = p_kpa * 10.1972f;
 
-  // Serial.println(voltage);
-  // // Your existing formula
-  // // If your pressure sensor is powered by 3.3V,
-  // // consider changing /5.0 -> /3.3
-  // //pressure_kpa = (55.55f * voltage / 5.0f) - 2.22f + trimPressure;
-
-  // pressure_kpa = 11.11f * voltage - 2.22f;
-  // // kPa -> cm H2O
-  // cm_h2o = 0.0101972f * pressure_kpa * 1000.0f;
-
-  // // Moving average ring buffer update
-  // // Remove old sample at this slot
-  // total_height -= readings[readIndex];
-  // // Store newest
-  // readings[readIndex] = cm_h2o;
-  // // Add newest
-  // total_height += readings[readIndex];
-
-  // // Advance index
-  // readIndex++;
-  // if (readIndex >= numReadings) readIndex = 0;
-
-  // // NEW: grow sampleCount until buffer is full
-  // if (sampleCount < numReadings) sampleCount++;
-
-  // // Compute average using only valid samples so far
-  // average_height = (total_height / sampleCount) - zeroHeight;
-
-    average_height = random(0, 1000) / 100.0; // e.g. 0.00–9.99
+    // average_height = random(0, 1000) / 100.0; // e.g. 0.00–9.99
     // average_height = 11.11;
   
 }
@@ -181,6 +172,29 @@ void setup() {
                     0, true, 0, 0, LORA_IQ_INVERSION_ON, true);
 
   state = STATE_SCHEDULE;
+
+  //--------------------------------
+  //data collection set up
+  delay(500);
+  analogReadResolution(12);
+  analogSetPinAttenuation(ADC_PIN, ADC_11db);
+
+  Serial.println("Starting MPX5050DP debug... Auto-zeroing...");
+
+  // Average a bunch of samples for a stable zero point
+  const int N = 200;
+  float sum = 0.0f;
+  for (int i = 0; i < N; i++) {
+    sum += readVoutOnce();
+    delay(5);
+  }
+  vout0 = sum / N;
+
+  Serial.print("Auto-zero done. vout0=");
+  Serial.print(vout0, 4);
+  Serial.print(" V  expected(0)=");
+  Serial.print(0.04f * VS, 4);
+  Serial.println(" V");
 }
 
 // ---------------- Loop ----------------
