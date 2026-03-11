@@ -1,3 +1,7 @@
+// file - preferences - additional board managers URLS - https://espressif.github.io/arduino-esp32/package_esp32_index.json
+// boards - esp32 by espressif systems
+// libraries - heltec esp32 dev-boards by Heltec
+// Selecting board - Heltec Wifi LoRa 32 (V3)
 // ============================
 // Heltec LoRa Ping-Pong + Sensor Burst
 // Behavior:
