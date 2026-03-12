@@ -17,7 +17,7 @@ void setup() {
 
   myServo.attach(15); // ESP32 SPECIFIC CODE
 
-  SerialBT.begin("ESP32test"); // the name should be whatever the bluetooth device name is!!
+  SerialBT.begin("WiFi LoRa 32 V3"); // the name should be whatever the bluetooth device name is!!
   Serial.println("The device started, now you can pair it with bluetooth!"); 
 }
 
