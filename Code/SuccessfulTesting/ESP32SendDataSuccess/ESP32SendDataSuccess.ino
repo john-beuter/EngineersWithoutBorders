@@ -37,10 +37,16 @@
 #define BUFFER_SIZE                                 64
 
 // ---------------- Burst behavior ----------------
+// static const uint8_t  BURST_COUNT      = 5;
+// static const uint32_t BURST_PERIOD_MS  = 300000;              // every 300 seconds
+// static const uint32_t INTER_SEND_MS    = BURST_PERIOD_MS / 5; // 20000ms
+// static const uint32_t REC_ACK_WAIT     = 1200000; //20 mins
+
+// ---------------- Burst behavior ---------------- TESTING
 static const uint8_t  BURST_COUNT      = 5;
-static const uint32_t BURST_PERIOD_MS  = 300000;              // every 300 seconds
-static const uint32_t INTER_SEND_MS    = BURST_PERIOD_MS / 5; // 20000ms
-static const uint32_t REC_ACK_WAIT     = 1200000; //20 mins
+static const uint32_t BURST_PERIOD_MS  = 50000;              // every 50 seconds
+static const uint32_t INTER_SEND_MS    = BURST_PERIOD_MS / 5; // 10 seconds
+static const uint32_t REC_ACK_WAIT     = 30000; //30 secs
 
 // ---------------- Sensor config ----------------
 // #define ANALOG_PIN                                  1  // <-- set your actual ADC pin
@@ -124,10 +130,10 @@ static void updateSensorAverageOnce() {
     // Force P=0 at the calibration point:
     float p_kpa = (vout - vout0) / (0.018f * VS);
 
-    float average_height = p_kpa * 10.1972f;
+    //float average_height = p_kpa * 10.1972f;
 
-    // average_height = random(0, 1000) / 100.0; // e.g. 0.00–9.99
-    // average_height = 11.11;
+    //testing
+    average_height += 1.0f;
   
 }
 
