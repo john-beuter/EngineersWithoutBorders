@@ -143,11 +143,11 @@ void loop() {
     // Parse Data
     double readingValue = incomingMessage.toDouble();
 
-    if (readingValue == 0.0) {
-      Serial.println("Invalid format. Returning to RX.");
-      Radio.Rx(0);
-      return;
-    }
+    // if (readingValue == 0.0) {
+    //   Serial.println("Invalid format. Returning to RX.");
+    //   Radio.Rx(0);
+    //   return;
+    // }
 
     // // CHECK FOR DUPLICATES
     // if (duplicate(lastUpload)) {

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 
-static const int ADC_PIN = 2;          // <-- CHANGE THIS to the GPIO you used (2/3/4/5/6/7 recommended)
+static const int ADC_PIN = 3;          // <-- CHANGE THIS to the GPIO you used (2/3/4/5/6/7 recommended)
 static const float VS = 5.0f;          // sensor supply voltage (measure it!)
 static const float RTOP = 10000.0f;    // divider top resistor (ohms)
 static const float RBOT = 22000.0f;    // divider bottom resistor (ohms)
@@ -25,9 +25,7 @@ void setup() {
 }
 
 void loop() {
-  int raw = analogRead(ADC_PIN) + 1; //currently reading max = 4095
-
-  // ESP32 Arduino often assumes ~3.3V reference for conversion
+  int raw = analogRead(ADC_PIN); //currently reading max = 4095  // ESP32 Arduino often assumes ~3.3V reference for conversion
   float vadc = (raw / 4095.0f) * 3.3f;
 
   // Back-calculate sensor output before divider:   
@@ -38,7 +36,7 @@ void loop() {
   float p_kpa = (vout / VS - 0.04f) / 0.018f;
 
   // 1 kPa = 10.1972 cmH2O
-  float p_cmh2o = (p_kpa * 10.1972f)+5;
+  float p_cmh2o = (p_kpa * 10.1972f)+6.5;
 
   Serial.print("raw="); Serial.print(raw);
   Serial.print("  Vadc="); Serial.print(vadc, 3);
