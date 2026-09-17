@@ -7,6 +7,8 @@
 //endif
 
 Servo myServo;
+
+BluetoothSerial SerialBT;
 // UNO CODE: int pwm = 11;
 
 void setup() {
@@ -17,7 +19,7 @@ void setup() {
 
   myServo.attach(15); // ESP32 SPECIFIC CODE
 
-  SerialBT.begin("ESP32test"); // the name should be whatever the bluetooth device name is!!
+  SerialBT.begin("WiFi LoRa 32 V3"); // the name should be whatever the bluetooth device name is!!
   Serial.println("The device started, now you can pair it with bluetooth!"); 
 }
 
@@ -33,7 +35,7 @@ void loop() {
   if (SerialBT.available()) {
     Serial.write(SerialBT.read());
   }
-  delay(20)
+  delay(20);
 
   myServo.writeMicroseconds(1700); // makes it go forward 
   delay(7000);
