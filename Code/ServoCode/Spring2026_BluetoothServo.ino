@@ -7,6 +7,8 @@
 //endif
 
 Servo myServo;
+
+BluetoothSerial SerialBT;
 // UNO CODE: int pwm = 11;
 
 void setup() {
@@ -33,7 +35,7 @@ void loop() {
   if (SerialBT.available()) {
     Serial.write(SerialBT.read());
   }
-  delay(20)
+  delay(20);
 
   myServo.writeMicroseconds(1700); // makes it go forward 
   delay(7000);
